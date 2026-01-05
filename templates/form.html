@@ -2,17 +2,467 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Image Classifier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lung Disease Detection</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: rgba(255, 255, 255, 0.06);
+      --panel-2: rgba(255, 255, 255, 0.09);
+      --text: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.68);
+      --border: rgba(255, 255, 255, 0.14);
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      --ok: #31c48d;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --accent: #60a5fa;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--text);
+      background: radial-gradient(1200px 700px at 10% 10%, rgba(96,165,250,0.20), transparent 55%),
+                  radial-gradient(900px 600px at 85% 20%, rgba(49,196,141,0.14), transparent 55%),
+                  radial-gradient(900px 600px at 40% 95%, rgba(245,158,11,0.10), transparent 55%),
+                  var(--bg);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .wrap { width: min(980px, 100%); }
+
+    .header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .badge {
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 8px 10px;
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-h {
+      padding: 16px 16px 0;
+    }
+
+    .card-t {
+      font-weight: 700;
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+
+    .card-p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .card-b {
+      padding: 16px;
+    }
+
+    .drop {
+      position: relative;
+      border: 1px dashed rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 14px;
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .drop.dragover {
+      border-color: rgba(96,165,250,0.75);
+      background: rgba(96,165,250,0.08);
+      transform: translateY(-1px);
+    }
+
+    .drop-top {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(96,165,250,0.12);
+      border: 1px solid rgba(96,165,250,0.25);
+      color: rgba(255,255,255,0.92);
+      flex: 0 0 auto;
+    }
+
+    .drop-title { margin: 0; font-weight: 700; }
+    .drop-sub { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+
+    input[type="file"] { display: none; }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+
+    .btn.primary {
+      background: rgba(96,165,250,0.22);
+      border-color: rgba(96,165,250,0.40);
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      transform: none;
+    }
+
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .preview {
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.22);
+      border-radius: 14px;
+      height: 280px;
+      overflow: hidden;
+      position: relative;
+    }
+    .preview img {
+      max-width: 100%;
+      max-height: 100%;
+      display: none;
+    }
+    .preview .ph {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 22px;
+      text-align: center;
+    }
+
+    .alert {
+      border: 1px solid rgba(239,68,68,0.35);
+      background: rgba(239,68,68,0.10);
+      color: rgba(255,255,255,0.92);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .result {
+      display: grid;
+      gap: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      font-weight: 750;
+      letter-spacing: 0.02em;
+      width: fit-content;
+    }
+
+    .dot { width: 9px; height: 9px; border-radius: 999px; background: var(--accent); }
+    .dot.ok { background: var(--ok); }
+    .dot.warn { background: var(--warn); }
+    .dot.danger { background: var(--danger); }
+
+    .bars { display: grid; gap: 10px; }
+    .bar {
+      display: grid;
+      gap: 6px;
+    }
+    .bar-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .meter {
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .meter > div {
+      height: 100%;
+      width: 0;
+      background: rgba(96,165,250,0.75);
+    }
+
+    .foot {
+      margin-top: 14px;
+      color: rgba(255,255,255,0.55);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: rgba(255,255,255,0.85);
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
-  <h1>Upload an image</h1>
-  <form method="post" enctype="multipart/form-data">
-    <input type="file" name="file">
-    <input type="submit" value="Classify">
-  </form>
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <h1 class="title">Lung Disease Detection</h1>
+        <p class="subtitle">Upload a chest X-ray. The model returns a predicted label and class probabilities.</p>
+      </div>
+      <div class="badge">Input: JPG/PNG • 128×128 preprocessing</div>
+    </div>
 
-  {% if label %}
-    <h2>Result: {{ label }}</h2>
-  {% endif %}
+    <div class="grid">
+      <div class="card">
+        <div class="card-h">
+          <p class="card-t">Upload</p>
+          <p class="card-p">Drag & drop an image anywhere on the upload area, or click to browse.</p>
+        </div>
+        <div class="card-b">
+          {% if error %}
+            <div class="alert" role="alert">{{ error }}</div>
+            <div style="height: 12px"></div>
+          {% endif %}
+
+          <form id="uploadForm" method="post" enctype="multipart/form-data" autocomplete="off">
+            <div id="dropzone" class="drop">
+              <div class="drop-top">
+                <div class="icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 16V4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M7 9L12 4L17 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5 20H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="drop-title">Choose an image</p>
+                  <p class="drop-sub">PNG or JPG recommended. Try a frontal chest X-ray.</p>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="hint" id="fileHint">No file selected</div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                  <div class="spinner" id="spinner" aria-hidden="true"></div>
+                  <button class="btn primary" id="submitBtn" type="submit" disabled>Classify</button>
+                </div>
+              </div>
+
+              <input id="fileInput" type="file" name="file" accept="image/png,image/jpeg" />
+            </div>
+          </form>
+
+          <p class="foot">This tool is for educational purposes and is not a medical device.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <p class="card-t">Preview & result</p>
+          <p class="card-p">Preview the uploaded image and see the model output.</p>
+        </div>
+        <div class="card-b">
+          <div class="preview">
+            <div class="ph" id="ph">Your image preview will appear here.</div>
+            <img id="previewImg" alt="Uploaded image preview" />
+          </div>
+
+          <div style="height: 12px"></div>
+
+          {% if label %}
+            <div class="result">
+              <div class="pill">
+                {% if label == 'NORMAL' %}
+                  <span class="dot ok"></span>
+                {% else %}
+                  <span class="dot danger"></span>
+                {% endif %}
+                <span>Prediction: {{ label }}</span>
+              </div>
+
+              {% if probs %}
+              <div class="bars">
+                {% for k, v in probs.items() %}
+                  <div class="bar">
+                    <div class="bar-head">
+                      <span>{{ k }}</span>
+                      <span>{{ '%.2f'|format(v*100) }}%</span>
+                    </div>
+                    <div class="meter"><div style="width: {{ v*100 }}%"></div></div>
+                  </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="hint">No prediction yet. Upload an image to start.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const fileHint = document.getElementById('fileHint');
+    const submitBtn = document.getElementById('submitBtn');
+    const previewImg = document.getElementById('previewImg');
+    const placeholder = document.getElementById('ph');
+    const dropzone = document.getElementById('dropzone');
+    const form = document.getElementById('uploadForm');
+    const spinner = document.getElementById('spinner');
+
+    function setPreview(file) {
+      if (!file) {
+        previewImg.style.display = 'none';
+        placeholder.style.display = 'block';
+        previewImg.src = '';
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      previewImg.src = url;
+      previewImg.style.display = 'block';
+      placeholder.style.display = 'none';
+    }
+
+    function updateUIFromFile() {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) {
+        fileHint.textContent = 'No file selected';
+        submitBtn.disabled = true;
+        setPreview(null);
+        return;
+      }
+      fileHint.textContent = `${file.name} • ${(file.size / 1024).toFixed(0)} KB`;
+      submitBtn.disabled = false;
+      setPreview(file);
+    }
+
+    fileInput.addEventListener('change', updateUIFromFile);
+    dropzone.addEventListener('click', (e) => {
+  if (e.target.closest('button')) return;
+  fileInput.click();
+});
+
+    ;['dragenter','dragover'].forEach(evt => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add('dragover');
+      });
+    });
+
+    ;['dragleave','drop'].forEach(evt => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('dragover');
+      });
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (!files || !files.length) return;
+      fileInput.files = files;
+      updateUIFromFile();
+    });
+
+    form.addEventListener('submit', () => {
+      if (submitBtn.disabled) return;
+      spinner.style.display = 'inline-block';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Classifying…';
+    });
+
+    // If user already has a prediction (postback), keep preview if browser kept file selection.
+    updateUIFromFile();
+  </script>
 </body>
 </html>
