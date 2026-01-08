@@ -113,24 +113,6 @@ The model was trained on a subset of chest X-ray images:
 
 To retrain the model, open `LungDisease_Classification.ipynb` in Jupyter or Google Colab and run the cells sequentially.
 
-## Model Performance
-
-Results on the limited validation set:
-
-| Metric | Value | Notes |
-|--------|-------|-------|
-| Validation Accuracy | ~96% | Only 18 validation samples |
-| Test Set Performance | Not thoroughly evaluated | - |
-
-**Confusion Matrix** (validation set, 18 samples):
-```
-              Predicted
-           NORMAL  PNEUMONIA
-Actual
-NORMAL       10       0
-PNEUMONIA     0       8
-```
-
 ## Technologies
 
 - **PyTorch** - Deep learning framework
