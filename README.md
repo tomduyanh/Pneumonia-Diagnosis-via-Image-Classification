@@ -101,35 +101,6 @@ Flatten → FC(512) + Dropout(0.5) → FC(2)
 
 Note: The web application is intended for demonstration only and runs in debug mode.
 
-### Using the Model Directly
-
-```python
-from PIL import Image
-import torch
-import numpy as np
-from model import PneumoniaDiagnosis
-
-# Load model
-model = PneumoniaDiagnosis()
-model.load_state_dict(torch.load('checkpoints/best_model.pth', map_location='cpu'))
-model.eval()
-
-# Process image
-img = Image.open('xray.jpg').convert('L').resize((128, 128))
-x = torch.tensor(np.array(img), dtype=torch.float32).unsqueeze(0).unsqueeze(1)
-
-# Get prediction
-with torch.no_grad():
-    logits = model(x)
-    probs = torch.softmax(logits, dim=1)
-    predicted = torch.argmax(logits, dim=1).item()
-    
-print(f"Prediction: {'PNEUMONIA' if predicted == 1 else 'NORMAL'}")
-print(f"Confidence: {probs[0][predicted].item():.2%}")
-```
-
-## Training
-
 The model was trained on a subset of chest X-ray images:
 
 - **Training samples**: 5,451 images
@@ -160,33 +131,12 @@ NORMAL       10       0
 PNEUMONIA     0       8
 ```
 
-## Limitations
-
-Please be aware of these important limitations:
-
-- **Very Small Validation Set**: Only 18 validation samples were used, which is insufficient for reliable performance estimation
-- **Limited Testing**: The model has not been tested on diverse, real-world medical data
-- **No Clinical Validation**: This has not been validated by medical professionals or tested in clinical settings
-- **Simplified Architecture**: The model is relatively basic compared to state-of-the-art medical imaging systems
-- **Educational Purpose Only**: This project is for learning and should never be used for actual medical diagnosis
-- **Dataset Limitations**: Trained on a specific dataset that may not represent broader populations
-- **No Regulatory Approval**: This model has no medical device certification or regulatory approval
-
 ## Technologies
 
 - **PyTorch** - Deep learning framework
 - **Flask** - Web framework
 - **Pillow** - Image processing
 - **NumPy** - Numerical computing
-
-Dependencies are listed in `requirements.txt`:
-```
-flask
-numpy
-pillow
-torch
-torchvision
-```
 
 ## Acknowledgments
 
