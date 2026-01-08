@@ -10,9 +10,6 @@ A learning project that explores using Convolutional Neural Networks (CNN) to cl
 - [Model Architecture](#model-architecture)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Training](#training)
-- [Model Performance](#model-performance)
-- [Limitations](#limitations)
 - [Technologies](#technologies)
 
 ## Overview
@@ -103,9 +100,6 @@ Note: The web application is intended for demonstration only and runs in debug m
 
 The model was trained on a subset of chest X-ray images:
 
-- **Training samples**: 5,451 images
-- **Validation samples**: 18 images (very small)
-- **Test samples**: 624 images
 - **Optimizer**: Adam (learning rate: 0.001)
 - **Loss**: Cross-Entropy
 - **Batch Size**: 32
